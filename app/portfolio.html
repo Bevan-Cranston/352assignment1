@@ -1,23 +1,26 @@
 <html>
 <head>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"> </script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
 
 <script>
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:8080/portfoliodata',
+        timeout: 3000,
+        success: function(responseData)
+        {
+            var json = JSON.parse(responseData);
+            console.log(json)
+            for(i in json.stocks) {
+              var curStock = json.stocks[i]
+              $('#userdata tbody').append("<tr><td>" + curStock.stock + "</td><td>" + curStock.quantity + "</td><td>" + curStock.price + "</td><td>" + curStock.pl + "</td><td>" + "?" + "</td></tr>");
 
-    $(function() {
-
-   var stock = [];
-
-   $.getJSON("portfolio.json", function(data) {
-       $.each(data.stock, function(i, f) {
-          var tblRow = "<tr>" + "<td>" + f.stock + "</td>" +
-           "<td>" + f.quantity + "</td>" + "<td>" + f.price + "</td>" + "<td>" + f.pl + "</td>" + "</tr>"
-           $(tblRow).appendTo("#userdata tbody");
-     });
-
-   });
-
-});
+            }
+        },
+        error: function (responseData, textStatus, errorThrown)
+        {
+        }
+    });
 </script>
 </head>
 
@@ -25,17 +28,17 @@
 
 <div class="wrapper">
 <div class="profile">
-   <table id= "userdata" border="2">
+<table id= "userdata" border="2">
   <thead>
-            <th>Stock</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Gain/Loss</th>
-        </thead>
-      <tbody>
+    <th>Stock</th>
+    <th>Quantity</th>
+    <th>Price</th>
+    <th>Gain/Loss</th>
+  </thead>
+  <tbody>
 
-       </tbody>
-   </table>
+  </tbody>
+</table>
 
 </div>
 </div>
