@@ -1,0 +1,44 @@
+<html>
+<head>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"> </script>
+
+<script>
+
+    $(function() {
+
+   var stock = [];
+
+   $.getJSON("portfolio.json", function(data) {
+       $.each(data.stock, function(i, f) {
+          var tblRow = "<tr>" + "<td>" + f.stock + "</td>" +
+           "<td>" + f.quantity + "</td>" + "<td>" + f.price + "</td>" + "<td>" + f.pl + "</td>" + "</tr>"
+           $(tblRow).appendTo("#userdata tbody");
+     });
+
+   });
+
+});
+</script>
+</head>
+
+<body>
+
+<div class="wrapper">
+<div class="profile">
+   <table id= "userdata" border="2">
+  <thead>
+            <th>Stock</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Gain/Loss</th>
+        </thead>
+      <tbody>
+
+       </tbody>
+   </table>
+
+</div>
+</div>
+
+</body>
+</html>
