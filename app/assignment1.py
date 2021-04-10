@@ -20,7 +20,7 @@ Usage: execute this program, open your browser (preferably chrome) and type http
 e.g. if server.py and browser are running on the same machine, then use http://localhost:8080
 
 """
-from os import environ
+
 from socket import *
 import _thread
 import base64
@@ -41,14 +41,13 @@ class Server:
 		with open("portfolio.json", "r", newline="") as datafile:
 			self.portfolio = json.load(datafile)
 
-		PORT = int(environ.get('PORT'))  # server_config.getint('PORT')
-
 		server_socket = socket(AF_INET, SOCK_STREAM)
 
+		server_port = 8080
 		server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-		server_socket.bind(('', PORT))
-		server_socket.listen(5)
+		server_socket.bind(("", server_port))
 
+		server_socket.listen(5)
 		print('The server is running')
 		# Server should be up and running and listening to the incoming connections
 		# Main web server loop. It simply accepts TCP connections, and get the request processed in seperate threads.
@@ -70,7 +69,7 @@ class Server:
 
 		def get_symbols():
 			api_url = "https://cloud.iexapis.com/stable/ref-data/symbols?token={}".format(self.token)
-			return [i['symbol'] for i in requests.get(api_url).json() if i['type'] == 'cs']
+			return {"symbols": [i['symbol'] for i in requests.get(api_url).json() if i['type'] == 'cs']}
 
 		# Extract the given header value from the HTTP request message
 		def get_header(message, header):
@@ -80,10 +79,9 @@ class Server:
 				value = None
 			return value
 
-		def portfolio():
-			header = "HTTP/1.1 200 OK\r\n\r\n".encode()
-			with open("portfolio2.html") as datafile:
-				body = datafile.read().encode()
+		def stock():
+			header = ""
+			body = ""
 			# Send the HTTP response header line to the connection socket
 			connection_socket.send(header)
 			# Send the content of the HTTP body (e.g. requested file) to the connection socket
@@ -91,9 +89,10 @@ class Server:
 			# Close the client connection socket
 			connection_socket.close()
 
-		def stock():
-			header = ""
-			body = ""
+		def portfolio():
+			header = "HTTP/1.1 200 OK\r\n\r\n".encode()
+			with open("portfolio.html") as datafile:
+				body = datafile.read().encode()
 			# Send the HTTP response header line to the connection socket
 			connection_socket.send(header)
 			# Send the content of the HTTP body (e.g. requested file) to the connection socket
@@ -135,6 +134,16 @@ class Server:
 				# map requested resource (contained in the URL) to specific function which generates HTTP response
 				if resource == "portfolio":
 					portfolio()
+				elif resource == "symbols":
+					header = "HTTP/1.1 200 OK\r\n\r\n".encode()
+					connection_socket.send(header)
+					connection_socket.send(json.dumps(get_symbols(), indent=2).encode('utf-8'))
+					connection_socket.close()
+				elif resource == "portfoliodata":
+					header = "HTTP/1.1 200 OK\r\n\r\n".encode()
+					connection_socket.send(header)
+					connection_socket.send(json.dumps(self.portfolio, indent=2).encode('utf-8'))
+					connection_socket.close()
 				elif resource == "stock":
 					stock()
 				else:
