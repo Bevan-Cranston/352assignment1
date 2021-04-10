@@ -20,7 +20,8 @@ Usage: execute this program, open your browser (preferably chrome) and type http
 e.g. if server.py and browser are running on the same machine, then use http://localhost:8080
 
 """
-
+from distutils import config
+from os import environ
 from socket import *
 import _thread
 import base64
@@ -41,11 +42,17 @@ class Server:
 		with open("portfolio.json", "r", newline="") as datafile:
 			self.portfolio = json.load(datafile)
 
+		server_config = config['Server']
+
+		# configurations
+		HOST = server_config['HOST']
+		PORT = int(environ.get('PORT'))  # server_config.getint('PORT')
+
 		server_socket = socket(AF_INET, SOCK_STREAM)
 
-		server_port = 8080
 		server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-		server_socket.bind(("", server_port))
+		server_socket.bind((HOST, PORT))
+		server_socket.listen(server_config.getint('LIMIT'))
 
 		server_socket.listen(5)
 		print('The server is running')
