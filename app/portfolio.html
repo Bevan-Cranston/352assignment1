@@ -4,7 +4,7 @@
 <script>
     $.ajax({
         type: 'GET',
-        url: 'portfoliodata/',
+        url: '/portfoliodata',
         timeout: 3000,
         success: function(responseData)
         {
@@ -25,7 +25,7 @@
   function clearTable() {
       $.ajax({
           type: 'GET',
-          url: 'portfolioClear',
+          url: '/portfolioClear',
           timeout: 3000,
           success: function(responseData)
           {
