@@ -162,7 +162,7 @@ class Server:
 
 		# service function to generate HTTP response with a simple welcome message
 		def welcome():
-			body = "<html><head></head><body><h1>Welcome to my homepage</h1></body></html>\r\n".encode()
+			body = "<html><head></head><body><h1>Stock Portfolio Tool - use /stock and /portfolio </h1></body></html>\r\n".encode()
 			send_success(body)
 
 		def send_success(body):
