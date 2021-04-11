@@ -37,6 +37,7 @@ class Server:
 	# We process client request here. The requested resource in the URL is mapped to a service function which generates the
 	# HTTP response that is eventually returned to the client.
 	def __init__(self):
+
 		self.token = "pk_25bf16864f614cd2bcee257a341c7e72"
 
 		# username and password
