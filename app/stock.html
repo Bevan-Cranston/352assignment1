@@ -10,7 +10,7 @@
 
         $.ajax({
             type: "GET",
-            url: 'http://localhost:8080/stock/'+ (ele.value),
+            url: 'stock/'+ (ele.value),
             contentType:"image/png",
             success: function (data) {
                 console.log(data);
@@ -25,7 +25,7 @@
 <script>
     $.ajax({
         type: 'GET',
-        url: 'http://localhost:8080/symbols',
+        url: '/symbols',
         timeout: 3000,
         success: function(responseData)
         {

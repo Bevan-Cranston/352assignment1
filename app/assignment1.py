@@ -4,20 +4,20 @@ This is a simple HTTP server which listens on port 8080, accepts connection requ
 in separate threads.
 
 It implements basic service functions (methods) which generate HTTP response to service the HTTP
-requests. Currently there are 3 service functions; default, welcome and getFile.
+requests - these are mapped from the url.
+
+There are 2 main service functions - stock, portfolio
+
+The other service functions are called from the client via HTML. These functions make use of AJAX to update the pages
+dynamically.
+
+One POST request is employed to verify that the local portfolio file (stored in JSON) always matches the HTML table
 
 The process function maps the request URL pattern to the service function. When the requested resource in the URL is
-empty, the default function is called which currently invokes the welcome function.
-The welcome service function responds with a simple HTTP response: "Welcome to my homepage".
-The getFile service function fetches the requested html or img file and generates an HTTP response containing the file
-contents and appropriate headers.
-
-To extend this server's functionality, define your service function(s), and map it to suitable URL pattern in the
-process function.
+empty, the server defaults to a simple homepage that lists the domains which can be accessed to use functionality
 
 This web server runs on python v3
-Usage: execute this program, open your browser (preferably chrome) and type http://servername:8080
-e.g. if server.py and browser are running on the same machine, then use http://localhost:8080
+This server runs on heroku cloud but can also run locally on port 8080 - comment line 54
 
 """
 import datetime
