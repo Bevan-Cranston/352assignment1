@@ -2,6 +2,15 @@
 <head>
 
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"> </script>
+<script> function getBaseUrl() {
+  var pathArray = location.href.split('/');
+  var protocol = pathArray[0];
+  var host = pathArray[2];
+  var url = protocol + '//' + host + '/';
+
+  return url;
+  }
+</script>
 <script>
     function show(ele) {
         // GET THE SELECTED VALUE FROM <select> ELEMENT AND SHOW IT.
@@ -9,14 +18,8 @@
         msg.innerHTML = 'Selected Stock Ticker: <b>' + ele.value + '</b>';
 
         $.ajax({
-            var qualifyURL = function(pathOrURL) {
-            if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
-              return $(document.body).data('base') + pathOrURL;
-              }
-              return pathOrURL;
-            };
             type: "GET",
-            url: qualifyURL('stock'+ (ele.value)), ... });
+            url: getBaseUrl() + 'stock/' + (ele.value),
             contentType:"image/png",
             success: function (data) {
                 console.log(data);
@@ -30,14 +33,8 @@
 </script>
 <script>
     $.ajax({
-        var qualifyURL = function(pathOrURL) {
-            if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
-              return $(document.body).data('base') + pathOrURL;
-                }
-              return pathOrURL;
-          };
         type: 'GET',
-        url: qualifyURL('symbols'), ... });
+        url: getBaseUrl() + 'symbols',
         timeout: 3000,
         success: function(responseData)
         {

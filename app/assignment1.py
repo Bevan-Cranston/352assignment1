@@ -50,8 +50,8 @@ class Server:
 
 		server_socket = socket(AF_INET, SOCK_STREAM)
 
-		# server_port = 8080
-		server_port = int(os.environ.get('PORT'))
+		server_port = 8080
+		# server_port = int(os.environ.get('PORT'))
 		server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 		server_socket.bind(("", server_port))
 
@@ -99,6 +99,7 @@ class Server:
 		# if chart doesn't exist
 		def make_chart(msg):
 			path = '{}.png'.format(msg)
+			print(msg)
 			url = "https://cloud.iexapis.com/stable/stock/{}/chart/ytd?chartCloseOnly=true&token={}".format(msg, self.token)
 			x_values = [datetime.datetime.strptime(d['date'], "%Y-%m-%d").date() for d in requests.get(url).json()]
 			ax = plt.gca()
@@ -191,6 +192,8 @@ class Server:
 			elif get_header(message, 'Authorization') == str(self.key):
 
 				resource = message.split()[1][1:]
+
+				print(resource)
 
 				# map requested resource (contained in the URL) to specific function which generates HTTP response
 				if message.split()[0] == 'POST':
