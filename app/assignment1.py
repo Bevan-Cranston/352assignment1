@@ -20,12 +20,18 @@ Usage: execute this program, open your browser (preferably chrome) and type http
 e.g. if server.py and browser are running on the same machine, then use http://localhost:8080
 
 """
-
+import datetime
+import time
 from socket import *
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import _thread
 import base64
 import requests
 import json
+import os
+
+from PIL import Image
 
 
 class Server:
@@ -38,8 +44,10 @@ class Server:
 		# username and password
 		self.key = base64.b64encode(bytes('%s:%s' % (13136165, 13136165), 'utf-8')).decode('ascii')
 
-		with open("portfolio.json", "r", newline="") as datafile:
-			self.portfolio = json.load(datafile)
+		self.portfolio = None
+
+		with open("SP500_ticker.json", "r", newline="") as datafile:
+			self.tickers = [i['Symbol'] for i in json.load(datafile)]
 
 		server_socket = socket(AF_INET, SOCK_STREAM)
 
@@ -48,7 +56,6 @@ class Server:
 		server_socket.bind(("", server_port))
 
 		server_socket.listen(5)
-		print('The server is running')
 		# Server should be up and running and listening to the incoming connections
 		# Main web server loop. It simply accepts TCP connections, and get the request processed in seperate threads.
 		while True:
@@ -59,17 +66,25 @@ class Server:
 			# start new thread to handle incoming request
 			_thread.start_new_thread(self.process, (conn_sock,))
 
+	def load_portfolio(self):
+		with open("portfolio.json", "r", newline="") as datafile:
+			self.portfolio = json.load(datafile)
+
 	def process(self, connection_socket):
-		def get_PL(symbol):
-			latest_quote = requests.get(
-				"https://cloud.iexapis.com/stable/stock/{}/quote?token={}".format('AAPL', self.token)).json()[
-				'iexRealtimePrice']
-			price = self.portfolio[symbol]['price']
-			return str(round((latest_quote - price) / price * 100)) + "%"
+
+		self.load_portfolio()
+
+		def set_gain_loss():
+			for i in range(len(self.portfolio['stocks'])):
+				s = self.portfolio['stocks'][i]
+				latest_quote = requests.get("https://cloud.iexapis.com/stable/stock/{}/quote?token={}".format(s['stock'], self.token)).json()['close']
+				self.portfolio['stocks'][i]['pl'] = str(round((latest_quote - float(s['price'])) / float(s['price']) * 100)) + "%"
+			with open('portfolio.json', 'w') as json_file:
+				json.dump(self.portfolio, json_file)
 
 		def get_symbols():
 			api_url = "https://cloud.iexapis.com/stable/ref-data/symbols?token={}".format(self.token)
-			return {"symbols": [i['symbol'] for i in requests.get(api_url).json() if i['type'] == 'cs']}
+			return {"symbols": [i['symbol'] for i in requests.get(api_url).json() if i['symbol'] in self.tickers]}
 
 		# Extract the given header value from the HTTP request message
 		def get_header(message, header):
@@ -79,32 +94,79 @@ class Server:
 				value = None
 			return value
 
+		def make_chart(msg):
+			path = '{}.png'.format(msg)
+			url = "https://cloud.iexapis.com/stable/stock/{}/chart/ytd?chartCloseOnly=true&token={}".format(msg, self.token)
+			x_values = [datetime.datetime.strptime(d['date'], "%Y-%m-%d").date() for d in requests.get(url).json()]
+			ax = plt.gca()
+			formatter = mdates.DateFormatter("%Y-%m-%d")
+			ax.xaxis.set_major_formatter(formatter)
+			locator = mdates.MonthLocator()
+			ax.xaxis.set_major_locator(locator)
+			plt.plot(x_values, [i['close'] for i in requests.get(url).json()])
+			plt.savefig(path)
+			return base64.b64encode(open(path, 'rb').read())
+
+		def get_chart(msg):
+			path = '{}.png'.format(msg)
+			if os.path.exists(path):
+				print("image found")
+				return base64.b64encode(open(path, 'rb').read())
+			else:
+				return make_chart(msg)
+
 		def stock():
-			header = ""
-			body = ""
-			# Send the HTTP response header line to the connection socket
-			connection_socket.send(header)
-			# Send the content of the HTTP body (e.g. requested file) to the connection socket
-			connection_socket.send(body)
-			# Close the client connection socket
-			connection_socket.close()
+			with open("stock.html") as datafile:
+				body = datafile.read().encode()
+			send_success(body)
 
 		def portfolio():
-			header = "HTTP/1.1 200 OK\r\n\r\n".encode()
 			with open("portfolio.html") as datafile:
 				body = datafile.read().encode()
-			# Send the HTTP response header line to the connection socket
-			connection_socket.send(header)
-			# Send the content of the HTTP body (e.g. requested file) to the connection socket
-			connection_socket.send(body)
-			# Close the client connection socket
-			connection_socket.close()
+			send_success(body)
+
+		def update_portfolio(msg):
+			new_stock = {}
+			for i in msg.split("&"):
+				new_stock[i.split('=')[0]] = i.split('=')[1]
+			new_stock['pl'] = "0%"
+			current_stocks = [i['stock'] for i in self.portfolio['stocks']]
+			if float(new_stock['quantity']) > 0:
+				if new_stock['stock'] not in current_stocks:
+					self.portfolio['stocks'].append(new_stock)
+				else:
+					for i in range(len(self.portfolio['stocks'])):
+						if self.portfolio['stocks'][i]['stock'] == new_stock['stock']:
+							self.portfolio['stocks'][i]['quantity'] = str(round(float(self.portfolio['stocks'][i]['quantity']) + float(new_stock['quantity'])))
+							self.portfolio['stocks'][i]['price'] = str(round((float(self.portfolio['stocks'][i]['quantity']) * float(self.portfolio['stocks'][i]['price']) + float(new_stock['quantity']) * float(new_stock['price'])) / (float(new_stock['quantity']) + float(self.portfolio['stocks'][i]['quantity']))))
+							break
+			else:
+				count = 0
+				for i in self.portfolio['stocks']:
+					if i['stock'] == new_stock['stock']:
+						new_quantity = float(self.portfolio['stocks'][count]['quantity']) + float(new_stock['quantity'])
+						if new_quantity < 0:
+							return
+						self.portfolio['stocks'][count]['quantity'] = str(new_quantity)
+
+					count += 1
+
+			with open('portfolio.json', 'w') as json_file:
+				json.dump(self.portfolio, json_file)
+			set_gain_loss()
+
+		def clear_portfolio():
+			with open('portfolio.json', 'w') as json_file:
+				json.dump({"stocks": []}, json_file)
 
 		# service function to generate HTTP response with a simple welcome message
 		def welcome():
-			header = "HTTP/1.1 200 OK\r\n\r\n".encode()
 			body = "<html><head></head><body><h1>Welcome to my homepage</h1></body></html>\r\n".encode()
-			connection_socket.send(header)
+			send_success(body)
+
+		def send_success(body):
+			success = "HTTP/1.1 200 OK\r\n\r\n".encode()
+			connection_socket.send(success)
 			# Send the content of the HTTP body (e.g. requested file) to the connection socket
 			connection_socket.send(body)
 			# Close the client connection socket
@@ -117,8 +179,6 @@ class Server:
 			# Extract the path of the requested object from the message
 			# Because the extracted path of the HTTP request includes
 			# a character '/', we read the path from the second character
-			print("Message")
-			print(message)
 
 			if get_header(message, "Authorization") == None:
 				connection_socket.send(
@@ -128,42 +188,30 @@ class Server:
 
 				resource = message.split()[1][1:]
 
-				print("Resource")
-				print(resource)
-
 				# map requested resource (contained in the URL) to specific function which generates HTTP response
-				if resource == "portfolio":
+				if message.split()[0] == 'POST':
+					if resource == "portfolio":
+						update_portfolio(message.split()[-1])
+						portfolio()
+				elif resource == "portfolio":
 					portfolio()
+				elif resource == "portfolioClear":
+					clear_portfolio()
+					header = "HTTP/1.1 200 OK\r\n\r\n".encode()
+					connection_socket.send(header)
+					connection_socket.close()
+				elif len(resource.split("/")) > 1 and resource.split("/")[1]:
+					send_success(get_chart(resource.split("/")[1]))
+				elif resource.split("/")[0] == "stock":
+					stock()
 				elif resource == "symbols":
-					header = "HTTP/1.1 200 OK\r\n\r\n".encode()
-					connection_socket.send(header)
-					connection_socket.send(json.dumps(get_symbols(), indent=2).encode('utf-8'))
-					connection_socket.close()
+					send_success(json.dumps(get_symbols(), indent=2).encode('utf-8'))
 				elif resource == "portfoliodata":
-					header = "HTTP/1.1 200 OK\r\n\r\n".encode()
-					connection_socket.send(header)
-					connection_socket.send(json.dumps(self.portfolio, indent=2).encode('utf-8'))
-					connection_socket.close()
+					send_success(json.dumps(self.portfolio, indent=2).encode('utf-8'))
 				elif resource == "stock":
 					stock()
 				else:
 					welcome()
 
-
-# service function to fetch the requested file, and send the contents back to the client in a HTTP response.
-# def getFile(filename):
-# 	try:
-# 		# open and read the file contents. This becomes the body of the HTTP response
-# 		f = open(filename, "rb")
-#
-# 		body = f.read()
-# 		header = "HTTP/1.1 200 OK\r\n\r\n".encode()
-#
-# 	except IOError:
-# 		# Send HTTP response message for resource not found
-# 		header = "HTTP/1.1 404 Not Found\r\n\r\n".encode()
-# 		body = "<html><head></head><body><h1>404 Not Found</h1></body></html>\r\n".encode()
-#
-# 	return header, body
 if __name__ == "__main__":
 	Server()

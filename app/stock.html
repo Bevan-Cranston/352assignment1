@@ -1,0 +1,60 @@
+<html>
+<head>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
+<script>
+    function show(ele) {
+        // GET THE SELECTED VALUE FROM <select> ELEMENT AND SHOW IT.
+        var msg = document.getElementById('msg');
+        msg.innerHTML = 'Selected Stock Ticker: <b>' + ele.value + '</b>';
+
+        $.ajax({
+            type: "GET",
+            url: 'http://localhost:8080/stock/'+ (ele.value),
+            contentType:"image/png",
+            success: function (data) {
+                console.log(data);
+                $('#img').attr('src', `data:image/png;base64,${data}`);
+            },
+            error: function (responseData, textStatus, errorThrown)
+            {
+            }
+         });
+    }
+</script>
+<script>
+    $.ajax({
+        type: 'GET',
+        url: 'http://localhost:8080/symbols',
+        timeout: 3000,
+        success: function(responseData)
+        {
+            var ele = document.getElementById('sel');
+            var json = JSON.parse(responseData);
+            console.log(json);
+            for(var i in json.symbols) {
+              var curSymbol = json.symbols[i];
+              ele.innerHTML = ele.innerHTML + '<option value="' + curSymbol + '">' + curSymbol + '</option>';
+
+            }
+        },
+        error: function (responseData, textStatus, errorThrown)
+        {
+        }
+    });
+</script>
+</head>
+<body>
+    <h2>Choose an S&P 500 stock ticker to see YTD chart</h2>
+    <h3>(wait a second before selecting)</h3>
+    <!--The SELECT element.-->
+    <select id="sel" onchange="show(this)">
+        <option value="">-- Select --</option>
+    </select>
+    <p id="msg"></p>
+    <img id="img" src="" alt="Select Ticker">
+</body>
+
+
+
+</html>

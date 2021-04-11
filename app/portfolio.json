@@ -1,16 +1,1 @@
-{
-   "stocks": [
-       {
-           "stock": "TSLA",
-           "quantity": "100",
-           "price": "250",
-           "pl": "1000"
-       },
-       {
-           "stock": "AAPL",
-           "quantity": "50",
-           "price": "150",
-           "pl": "-5"
-       }
-   ]
-}
+{"stocks": [{"stock": "TSLA", "quantity": "400.0", "price": "103", "pl": "557%"}]}

@@ -1,7 +1,6 @@
 <html>
 <head>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
-
 <script>
     $.ajax({
         type: 'GET',
@@ -13,7 +12,7 @@
             console.log(json)
             for(i in json.stocks) {
               var curStock = json.stocks[i]
-              $('#userdata tbody').append("<tr><td>" + curStock.stock + "</td><td>" + curStock.quantity + "</td><td>" + curStock.price + "</td><td>" + curStock.pl + "</td><td>" + "?" + "</td></tr>");
+              $('#userdata tbody').append("<tr><td>" + curStock.stock + "</td><td>" + curStock.quantity + "</td><td>" + curStock.price + "</td><td>" + curStock.pl + "</td></tr>");
 
             }
         },
@@ -21,6 +20,22 @@
         {
         }
     });
+</script>
+<script>
+  function clearTable() {
+      $.ajax({
+          type: 'GET',
+          url: 'http://localhost:8080/portfolioClear',
+          timeout: 3000,
+          success: function(responseData)
+          {
+              $("#userdata tbody").empty();
+          },
+          error: function (responseData, textStatus, errorThrown)
+          {}
+      });
+
+    }
 </script>
 </head>
 
@@ -40,8 +55,40 @@
   </tbody>
 </table>
 
+<form action="http://localhost:8080/portfolio" method="POST">
+  <div class="container">
+    <h1></h1>
+    <h3>To see a list of available stocks visit the /stock domain</h3>
+    <h3>Do not refresh this page</h3>
+    <h3>If the portfolio fails to update, please try again</h3>
+    <h3>note - short selling is not possible - if quantity becomes negative, the update will not be allowed</h3>
+    <h3>please enter a price of 0 when reducing a holding</h3>
+
+    <label for="stock"><b>Stock Symbol</b></label>
+    <input type="text" name="stock" id="stock" required>
+
+    <label for="quantity"><b>Quantity</b></label>
+    <input type="number" name="quantity" id="quantity" required>
+
+    <label for="price"><b>Price</b></label>
+    <input type="number" name="price" id="price" required>
+    <hr>
+
+    <button type="submit" class="registerbtn">Update</button>
+  </div>
+</form>
+
+  <button onclick="clearTable()">Reset</button>
+
+
 </div>
 </div>
 
 </body>
 </html>
+
+<script>
+if ( window.history.replaceState ) {
+  window.history.replaceState( null, null, window.location.href );
+}
+</script>
