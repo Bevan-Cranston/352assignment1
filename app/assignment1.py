@@ -53,7 +53,7 @@ class Server:
 
 		server_port = 8080
 		server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-		server_socket.bind(("", server_port))
+		server_socket.bind(("", os.environ.get('PORT')))
 
 		server_socket.listen(5)
 		# Server should be up and running and listening to the incoming connections
