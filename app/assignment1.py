@@ -31,8 +31,6 @@ import requests
 import json
 import os
 
-from PIL import Image
-
 
 class Server:
 
@@ -75,6 +73,7 @@ class Server:
 
 		self.load_portfolio()
 
+		# update the profit loss of a stock
 		def set_gain_loss():
 			for i in range(len(self.portfolio['stocks'])):
 				s = self.portfolio['stocks'][i]
@@ -83,6 +82,7 @@ class Server:
 			with open('portfolio.json', 'w') as json_file:
 				json.dump(self.portfolio, json_file)
 
+		# helper method to get all current symbols
 		def get_symbols():
 			api_url = "https://cloud.iexapis.com/stable/ref-data/symbols?token={}".format(self.token)
 			return {"symbols": [i['symbol'] for i in requests.get(api_url).json() if i['symbol'] in self.tickers]}
@@ -95,6 +95,7 @@ class Server:
 				value = None
 			return value
 
+		# if chart doesn't exist
 		def make_chart(msg):
 			path = '{}.png'.format(msg)
 			url = "https://cloud.iexapis.com/stable/stock/{}/chart/ytd?chartCloseOnly=true&token={}".format(msg, self.token)
@@ -116,11 +117,13 @@ class Server:
 			else:
 				return make_chart(msg)
 
+		# send stock chart html to client
 		def stock():
 			with open("stock.html") as datafile:
 				body = datafile.read().encode()
 			send_success(body)
 
+		# send portfolio html to client
 		def portfolio():
 			with open("portfolio.html") as datafile:
 				body = datafile.read().encode()
@@ -132,7 +135,9 @@ class Server:
 				new_stock[i.split('=')[0]] = i.split('=')[1]
 			new_stock['pl'] = "0%"
 			current_stocks = [i['stock'] for i in self.portfolio['stocks']]
+			# if long
 			if float(new_stock['quantity']) > 0:
+				# check if stock is in prortfolio already
 				if new_stock['stock'] not in current_stocks:
 					self.portfolio['stocks'].append(new_stock)
 				else:
@@ -177,14 +182,11 @@ class Server:
 		message = connection_socket.recv(1024).decode()
 
 		if len(message) > 1:
-			# Extract the path of the requested object from the message
-			# Because the extracted path of the HTTP request includes
-			# a character '/', we read the path from the second character
-
+			# check authorization
 			if get_header(message, "Authorization") == None:
 				connection_socket.send(
 					'HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm="Demo Realm"\r\n\r\n'.encode())
-
+			# if authorized
 			elif get_header(message, 'Authorization') == str(self.key):
 
 				resource = message.split()[1][1:]
