@@ -9,8 +9,14 @@
         msg.innerHTML = 'Selected Stock Ticker: <b>' + ele.value + '</b>';
 
         $.ajax({
+            var qualifyURL = function(pathOrURL) {
+            if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
+              return $(document.body).data('base') + pathOrURL;
+              }
+              return pathOrURL;
+            };
             type: "GET",
-            url: '/stock'+ (ele.value),
+            url: qualifyURL('stock'+ (ele.value)), ... });
             contentType:"image/png",
             success: function (data) {
                 console.log(data);
@@ -24,8 +30,14 @@
 </script>
 <script>
     $.ajax({
+        var qualifyURL = function(pathOrURL) {
+            if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
+              return $(document.body).data('base') + pathOrURL;
+                }
+              return pathOrURL;
+          };
         type: 'GET',
-        url: '/symbols',
+        url: qualifyURL('symbols'), ... });
         timeout: 3000,
         success: function(responseData)
         {

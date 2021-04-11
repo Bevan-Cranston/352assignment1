@@ -2,9 +2,15 @@
 <head>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"> </script>
 <script>
-    $.ajax({
+      $.ajax({
+        var qualifyURL = function(pathOrURL) {
+        if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
+          return $(document.body).data('base') + pathOrURL;
+        }
+        return pathOrURL;
+        };
         type: 'GET',
-        url: '/portfoliodata',
+        url: qualifyURL('portfoliodata'), ... });
         timeout: 3000,
         success: function(responseData)
         {
@@ -24,8 +30,14 @@
 <script>
   function clearTable() {
       $.ajax({
+          var qualifyURL = function(pathOrURL) {
+            if (!(new RegExp('^(http(s)?[:]//)','i')).test(pathOrURL)) {
+              return $(document.body).data('base') + pathOrURL;
+            }
+          return pathOrURL;
+          };
           type: 'GET',
-          url: '/portfolioClear',
+          url: qualifyURL('portfolioClear'), ... });
           timeout: 3000,
           success: function(responseData)
           {
